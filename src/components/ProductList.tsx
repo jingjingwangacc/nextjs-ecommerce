@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { wixClientServer } from '@/lib/wixClientServer';
 import { products } from '@wix/stores';
+import DOMPurify from "isomorphic-dompurify";
+
 
 
 const PRODUCT_PER_PAGE = 20;
@@ -11,17 +13,16 @@ const ProductList = async ({ categoryId, limit }: { categoryId: string; limit?: 
     const wixClient = await wixClientServer();
     
     const res = await wixClient.products
-        .queryProducts()   
-        .hasSome("collections.id", [categoryId])
-        .limit(limit || PRODUCT_PER_PAGE)
+        .queryProducts()
         .find();
-    // const items = res.items.filter(p => Array.isArray(p.collectionIds) && p.collectionIds.includes(categoryId));
-    // console.log('item', items);
+    const items = res.items.filter(p => Array.isArray(p.collectionIds) && p.collectionIds.includes(categoryId)).slice(0, limit);
+    
+    //console.log('item', items);
     // res.items.forEach(p => {
     //     console.log(p.name, p.collectionIds);
     //   });
 
-    console.log('res', res);
+    //console.log('res', res);
 
 
 
@@ -50,7 +51,19 @@ const ProductList = async ({ categoryId, limit }: { categoryId: string; limit?: 
                     <span className='font-medium'>{product.name}</span>
                     <span className='font-semibold'>${product.price?.price}</span>
                 </div>
-                <div className='text-sm text-gray-500'>{product.description}</div>
+                {product.additionalInfoSections && (
+            <div
+              className="text-sm text-gray-500"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(
+                  product.additionalInfoSections.find(
+                    (section: any) => section.title === "shortDesc"
+                  )?.description || ""
+                ),
+              }}
+            ></div>
+          )}
+                {/* <div className='text-sm text-gray-500'>{product.description}</div> */}
                 <button className='rounded-2xl ring-1 w-max ring-lama text-lama py-2 px-4 text-xs hover:bg-lama hover:text-white'>Add to Cart</button>
             </Link>
             ))}           
