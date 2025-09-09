@@ -27,7 +27,7 @@ const CategoryList = async() => {
       "appNamespace": "@wix/stores",
       "treeKey": null
     }});
-    console.log('cats', cats);
+    //console.log('cats', cats);
 
     return (
         <div className='px-4 overflow-x-scroll scrollbar-hide'>

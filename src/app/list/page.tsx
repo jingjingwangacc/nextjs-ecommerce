@@ -1,9 +1,39 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import Image from 'next/image'
 import Filter from '@/components/Filter'
 import ProductList from '@/components/ProductList'
+import { wixClientServer } from '@/lib/wixClientServer'
 
-const page = () => {
+const page = async ({ searchParams }: { searchParams: any }) => {
+  // console.log('search', searchParams);
+  const wixClient = await wixClientServer();
+  
+  async function getCategoryBySlug(slug: string) {
+    const { categories: cats } = await wixClient.categories.searchCategories({
+      filter: {
+        slug: slug
+      }
+    }, {
+      treeReference: {
+        appNamespace: "@wix/stores",
+        treeKey: null
+      }
+    });
+  
+    return cats?.[0] ?? null;
+  }
+  
+  const rawCat = Array.isArray(searchParams.cat)
+    ? searchParams.cat[0]
+    : searchParams.cat;
+
+  const slug = typeof rawCat === "string"
+    ? decodeURIComponent(rawCat).trim().toLowerCase()
+    : "all-products"; // 默认兜底
+
+  // 调用工具函数
+  const cat = await getCategoryBySlug(slug);
+
   return (
     <div className='px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative'>
       {/* CAMPAIGN */}
@@ -25,10 +55,12 @@ const page = () => {
         </div>
       </div>
       {/* FILTER */}
-      <Filter/>
+      <Filter />
       {/* PRODUCT */}
       <h1 className='mt-12 text-xl font-semibold'>Shoes For You</h1>
-      <ProductList/>
+      <Suspense fallback={'loading'}>
+      <ProductList categoryId={cat?._id || '4db94f04-d2ab-42fa-be41-7c8749477880'} searchParams={searchParams}/>
+      </Suspense>
     </div>
   )
 }
