@@ -2,6 +2,8 @@ import { createClient, OAuthStrategy } from "@wix/sdk";
 import { products, collections } from '@wix/stores'
 import { cookies } from "next/headers";
 import { categories } from "@wix/categories";
+import { productsV3 } from "@wix/stores";
+
 
 
 
@@ -20,7 +22,7 @@ export const wixClientServer = async () => {
 
     const wixClient = createClient({
         modules: {
-            products,
+            productsV3,
             categories,
         },
         auth: OAuthStrategy({

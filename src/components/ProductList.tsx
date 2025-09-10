@@ -12,17 +12,53 @@ const PRODUCT_PER_PAGE = 20;
 const ProductList = async ({ categoryId, limit, searchParams }: { categoryId: string; limit?: number; searchParams?:any }) => {
     const wixClient = await wixClientServer();
     
-    const res = await wixClient.products
-        .queryProducts()
-        .find();
-    const items = res.items.filter(p => Array.isArray(p.collectionIds) && p.collectionIds.includes(categoryId)).slice(0, limit);
+    const productQuery = wixClient.productsV3
+    .queryProducts()
+    .startsWith("name", searchParams?.name || "")
+    .eq("collectionIds", categoryId)
+    .hasSome(
+      "productType",
+      searchParams?.type ? [searchParams.type] : ["physical", "digital"]
+    )
+    .gt("priceData.price", searchParams?.min || 0)
+    .lt("priceData.price", searchParams?.max || 999999)
+    .limit(limit || PRODUCT_PER_PAGE)
+    .skip(
+      searchParams?.page
+        ? parseInt(searchParams.page) * (limit || PRODUCT_PER_PAGE)
+        : 0
+    );
+  
+    if (searchParams?.sort) {
+        const [sortType, sortBy] = searchParams.sort.split(" ");
     
-    //console.log('item', items);
-    // res.items.forEach(p => {
-    //     console.log(p.name, p.collectionIds);
-    //   });
+        if (sortType === "asc") {
+          productQuery.ascending(sortBy);
+        }
+        if (sortType === "desc") {
+          productQuery.descending(sortBy);
+        }
+      }
+    
+      const res = await productQuery.find();
+    // const res = await wixClient.products
+    //     .queryProducts()
+    //     .startsWith("name", searchParams?.name || "")
+    //     .hasSome(
+    //         "productType",
+    //         searchParams?.type ? [searchParams.type] : ["physical", "digital"]
+    //       )
+    //       .gt("priceData.price", searchParams?.min || 0)
+    //       .lt("priceData.price", searchParams?.max || 999999)
+    //       .skip(
+    //         searchParams?.page
+    //           ? parseInt(searchParams.page) * (limit || PRODUCT_PER_PAGE)
+    //           : 0
+    //       )
+    //     .find();
 
-    //console.log('res', res);
+    //const items = res.items.filter(p => Array.isArray(p.collectionIds) && p.collectionIds.includes(categoryId)).slice(0, limit);
+
 
 
 
