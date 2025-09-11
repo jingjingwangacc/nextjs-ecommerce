@@ -22,7 +22,7 @@ export const wixClientServer = async () => {
 
     const wixClient = createClient({
         modules: {
-            productsV3,
+            products,
             categories,
         },
         auth: OAuthStrategy({
