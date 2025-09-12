@@ -5,6 +5,7 @@ import CustomizeProducts from '@/components/CustomizeProducts'
 import Add from '@/components/Add'
 import { wixClientServer } from '@/lib/wixClientServer';
 import { notFound } from 'next/navigation'
+import DOMPurify from "isomorphic-dompurify";
 
 const SinglePage = async({params}: {params: {slug: string}}) => {
 
@@ -19,7 +20,7 @@ const SinglePage = async({params}: {params: {slug: string}}) => {
   }
 
   const product = products.items[0];
-  console.log('product', product.productOptions)
+  //console.log('product', product.productOptions)
 
 
   return (
@@ -31,9 +32,12 @@ const SinglePage = async({params}: {params: {slug: string}}) => {
       {/* TEXTS */}
       <div className='w-full lg:w-1/2 flex flex-col gap-6'>
         <h1 className='text-4xl font-medium'>{product.name}</h1>
-        <p className='text-gray-500'>
-          {product.description}
-        </p>
+        <div 
+          className='text-gray-500'
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(product.description || '')
+          }}
+        />
         <div className='h-[2px] bg-gray-100' />
         {product.price?.price === product.price?.discountedPrice ? (
           <h2 className="font-medium text-2xl">${product.price?.price}</h2>
@@ -63,7 +67,11 @@ const SinglePage = async({params}: {params: {slug: string}}) => {
         {product.additionalInfoSections?.map((section:any)=>(
            <div className='text-sm' key={section.title}>
            <h4 className='font-medium mb-4'>{section.title}</h4>
-           <p>{section.description}</p>
+           <div 
+             dangerouslySetInnerHTML={{
+               __html: DOMPurify.sanitize(section.description || '')
+             }}
+           />
          </div>
         ))}
        

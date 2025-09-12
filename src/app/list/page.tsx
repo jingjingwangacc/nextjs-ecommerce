@@ -33,6 +33,13 @@ const page = async ({ searchParams }: { searchParams: any }) => {
 
   // 调用工具函数
   const cat = await getCategoryBySlug(slug);
+  
+  // If no category found and slug is not "all-products", try to find by category filter
+  let categoryId = cat?._id;
+  if (!categoryId && searchParams.category) {
+    const categoryByFilter = await getCategoryBySlug(searchParams.category);
+    categoryId = categoryByFilter?._id;
+  }
 
   return (
     <div className='px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative'>
@@ -59,7 +66,7 @@ const page = async ({ searchParams }: { searchParams: any }) => {
       {/* PRODUCT */}
       <h1 className='mt-12 text-xl font-semibold'>Shoes For You</h1>
       <Suspense fallback={'loading'}>
-      <ProductList categoryId={cat?._id || '4db94f04-d2ab-42fa-be41-7c8749477880'} searchParams={searchParams}/>
+      <ProductList categoryId={categoryId || 'all-products'} searchParams={searchParams}/>
       </Suspense>
     </div>
   )
