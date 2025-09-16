@@ -4,28 +4,37 @@ import Image from 'next/image'
 import { wixClientServer } from '@/lib/wixClientServer';
 import { products } from '@wix/stores';
 import DOMPurify from "isomorphic-dompurify";
+import Pagination from './Pagination';
 
-const PRODUCT_PER_PAGE = 20;
+const PRODUCT_PER_PAGE = 4;
 
 const ProductList = async ({ categoryId, limit, searchParams }: { categoryId: string; limit?: number; searchParams?:any }) => {
     const wixClient = await wixClientServer();
     
     try {
-      // Start with a simple query
-      let productQuery = wixClient.products.queryProducts();
+      // First, get all products to calculate total count
+      let allProductsQuery = wixClient.products.queryProducts();
       
       // Apply basic filters only
       if (searchParams?.type) {
-        productQuery = productQuery.eq('productType', searchParams.type);
+        allProductsQuery = allProductsQuery.eq('productType', searchParams.type);
       }
       
-      // Apply pagination
+      const allRes = await allProductsQuery.find();
+      const allItems = allRes.items;
+      
+      // Calculate pagination info
       const page = searchParams?.page ? parseInt(searchParams.page) : 0;
       const limitValue = limit || PRODUCT_PER_PAGE;
-      productQuery = productQuery.skip(page * limitValue).limit(limitValue);
+      const totalItems = allItems.length;
+      const totalPages = Math.ceil(totalItems / limitValue);
+      const hasPrev = page > 0;
+      const hasNext = page < totalPages - 1;
       
-      const res = await productQuery.find();
-      let items = res.items;
+      // Apply pagination to the items
+      const startIndex = page * limitValue;
+      const endIndex = startIndex + limitValue;
+      let items = allItems.slice(startIndex, endIndex);
       
       // Apply category filter after fetching (client-side filtering for now)
       if (categoryId && categoryId !== 'all-products') {
@@ -124,6 +133,11 @@ const ProductList = async ({ categoryId, limit, searchParams }: { categoryId: st
               </Link>
             ))
           )}
+          <Pagination 
+            currentPage={page} 
+            hasPrev={hasPrev} 
+            hasNext={hasNext}
+          />
         </div>
       );
     } catch (error) {
